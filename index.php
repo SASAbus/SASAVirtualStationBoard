@@ -47,7 +47,12 @@ try
   if (isset ( $_REQUEST ['jsonp'] ))
     {
       echo $_REQUEST ['jsonp'] . json_encode ( 'Connection failed: ' . $e->getMessage () );
-    } else
+    } 
+  else if (isset ( $_REQUEST ['JSONP'] ))
+    {
+      echo $_REQUEST ['JSONP'] . json_encode ( 'Connection failed: ' . $e->getMessage () );
+    }
+  else
     {
       echo json_encode ( 'Connection failed: ' . $e->getMessage () );
     }
@@ -232,6 +237,11 @@ elseif(isset($_REQUEST['type']) && $_REQUEST['type'] == "jsonp")
       {
 	header("Content-type: text/plain; charset=utf-8");	
 	echo $_REQUEST['jsonp']."(".json_encode($jsonarray).")";
+      }
+    else if(isset($_REQUEST['JSONP']))
+      {
+	header("Content-type: text/plain; charset=utf-8");	
+	echo $_REQUEST['JSONP']."(".json_encode($jsonarray).")";
       }
     else
       {
