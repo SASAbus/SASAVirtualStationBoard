@@ -74,7 +74,7 @@ $linelist = getLines ( $mysql, $ort_nr["O_Id"] );
 
 $passlist = array();
 
-$realtimearray = array();
+$linerequeststring = "";
 
 foreach ( $linelist as $line )
   {
@@ -92,31 +92,44 @@ foreach ( $linelist as $line )
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["passtimes"] = $pass;
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["verlauf"] = $verlaufliste [$line ["L_Id"]] ["verlauf"];
 	    
-	  }
-	$request_url = $REALTIMEURL."/positions?lines=".$line["LI_NR"].":".$line["STR_LI_VAR"];
-	$request = new HttpRequest($request_url);
-	try 
+	  }		
+
+	if($linerequeststring = "")
 	  {
-	    $request->send();
-	    if ($request->getResponseCode() == 200) 
-	      {
-		if($response = json_decode($request->getResponseBody(), true))
-		  {
-		    foreach($response["features"] as $position)
-		      {
-			$realtimearray[$position["properties"]["frt_fid"]] = $position["properties"];
-		      }
-		  }
-	      }
-	  } 
-	catch (HttpException $ex) 
-	  {
-	    echo $ex->getMessage();
+	    $linerequeststring = $line["LI_NR"].":".$line["STR_LI_VAR"];
 	  }
-		
+	else
+	  {
+	    $linerequeststring .= ",".$line["LI_NR"].":".$line["STR_LI_VAR"];
+	  }
       }
 	
   }
+
+$realtimearray = array();
+
+$request_url = $REALTIMEURL."/positions?lines=".$linerequeststring;//$line["LI_NR"].":".$line["STR_LI_VAR"];
+$request = new HttpRequest($request_url);
+try 
+{
+  $request->send();
+  if ($request->getResponseCode() == 200) 
+    {
+      if($response = json_decode($request->getResponseBody(), true))
+	{
+	  foreach($response["features"] as $position)
+	    {
+	      $realtimearray[$position["properties"]["frt_fid"]] = $position["properties"];
+	    }
+	}
+    }
+} 
+catch (HttpException $ex) 
+{
+  echo $ex->getMessage();
+}
+
+
 
 ksort($passlist);
 
@@ -235,12 +248,12 @@ elseif(isset($_REQUEST['type']) && $_REQUEST['type'] == "jsonp")
   {
     if(isset($_REQUEST['jsonp']))
       {
-	header("Content-type: text/plain; charset=utf-8");	
+	header("Content-type: text/javascript; charset=utf-8");	
 	echo $_REQUEST['jsonp']."(".json_encode($jsonarray).")";
       }
     else if(isset($_REQUEST['JSONP']))
       {
-	header("Content-type: text/plain; charset=utf-8");	
+	header("Content-type: text/javascript; charset=utf-8");	
 	echo $_REQUEST['JSONP']."(".json_encode($jsonarray).")";
       }
     else
