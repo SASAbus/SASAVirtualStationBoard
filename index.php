@@ -94,7 +94,7 @@ foreach ( $linelist as $line )
 	    
 	  }		
 
-	if($linerequeststring = "")
+	if($linerequeststring == "")
 	  {
 	    $linerequeststring = $line["LI_NR"].":".$line["STR_LI_VAR"];
 	  }
@@ -109,6 +109,7 @@ foreach ( $linelist as $line )
 $realtimearray = array();
 
 $request_url = $REALTIMEURL."/positions?lines=".$linerequeststring;//$line["LI_NR"].":".$line["STR_LI_VAR"];
+
 $request = new HttpRequest($request_url);
 try 
 {
@@ -238,7 +239,7 @@ foreach($passlist as $timedpass)
       }
   }
 
-ob_clean();
+//ob_clean();
 if(isset($_REQUEST['type']) && $_REQUEST['type'] == "json")
   {
     header("Content-type: application/json; charset=utf-8");
