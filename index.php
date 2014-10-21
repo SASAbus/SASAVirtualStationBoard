@@ -79,6 +79,19 @@ $linerequeststring = "";
 foreach ( $linelist as $line )
   {
     $verlaufliste [$line ["L_Id"]] ["verlauf"] = getVerlauf ( $mysql, $line ["L_Id"] );
+    $weiter = false;
+    foreach($verlaufliste [$line ["L_Id"]] ["verlauf"] as $verlaufitem)
+      {
+	if($weiter)
+	  {
+	    $verlaufliste [$line ["L_Id"]]["verlaufnamen"][] = $ortliste[$verlaufitem];
+	  }
+	if($verlaufitem == $ort_nr["O_Id"])
+	  {
+	    $weiter = true;
+	  }
+      }
+
     $verlaufliste [$line ["L_Id"]] ["abfahrten"] = getFahrten ( $mysql, $line ["L_Id"] );
     if (count ( $verlaufliste [$line ["L_Id"]] ["abfahrten"] ) > 0)
       {
@@ -91,7 +104,7 @@ foreach ( $linelist as $line )
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["linie"] = $line;
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["passtimes"] = $pass;
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["verlauf"] = $verlaufliste [$line ["L_Id"]] ["verlauf"];
-	    
+	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["verlaufnamen"] = $verlaufliste [$line ["L_Id"]] ["verlaufnamen"];
 	  }		
 
 	if($linerequeststring == "")
@@ -166,6 +179,7 @@ foreach($passlist as $timedpass)
 		$departureitem["last_station"] = $ortliste[$singlepass["verlauf"][count($singlepass["verlauf"])]]["ORT_NAME"];
 		$departureitem["arrival"] = getFormatTime($stop);
 		$departureitem["departure"] = getFormatTime($start);
+		$departureitem["verlauf"] = $singlepass['verlaufnamen'];
 
 		if(isset($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]))
 		  {
@@ -187,7 +201,8 @@ foreach($passlist as $timedpass)
 		    $departureitem["last_station"] = $ortliste[$singlepass["verlauf"][count($singlepass["verlauf"])]]["ORT_NAME"];
 		    $departureitem["arrival"] = getFormatTime($stop);
 		    $departureitem["departure"] = getFormatTime($start);
-
+		    $departureitem["verlauf"] = $singlepass['verlaufnamen'];
+		    
 		    if(isset($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]))
 		      {
 			$departureitem["delay"] = floor($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]["delay_sec"] / 60);
