@@ -80,16 +80,23 @@ foreach ( $linelist as $line )
   {
     $verlaufliste [$line ["L_Id"]] ["verlauf"] = getVerlauf ( $mysql, $line ["L_Id"] );
     $weiter = false;
-    foreach($verlaufliste [$line ["L_Id"]] ["verlauf"] as $verlaufitem)
+    if($verlaufliste [$line ["L_Id"]] ["verlauf"][count($verlaufliste [$line ["L_Id"]] ["verlauf"])] != $ort_nr["O_Id"])
       {
-	if($weiter)
+	foreach($verlaufliste [$line ["L_Id"]] ["verlauf"] as $verlaufitem)
 	  {
-	    $verlaufliste [$line ["L_Id"]]["verlaufnamen"][] = $ortliste[$verlaufitem];
+	    if($weiter)
+	      {
+		$verlaufliste [$line ["L_Id"]]["verlaufnamen"][] = $ortliste[$verlaufitem];
+	      }
+	    if($verlaufitem == $ort_nr["O_Id"])
+	      {
+		$weiter = true;
+	      }
 	  }
-	if($verlaufitem == $ort_nr["O_Id"])
-	  {
-	    $weiter = true;
-	  }
+      }
+    else
+      {
+	$verlaufliste [$line ["L_Id"]]["verlaufnamen"] = null;
       }
 
     $verlaufliste [$line ["L_Id"]] ["abfahrten"] = getFahrten ( $mysql, $line ["L_Id"] );
@@ -104,6 +111,8 @@ foreach ( $linelist as $line )
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["linie"] = $line;
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["passtimes"] = $pass;
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["verlauf"] = $verlaufliste [$line ["L_Id"]] ["verlauf"];
+
+
 	    $passlist[$abfahrt['START'] + $pass["start"]][$abfahrt['FRT_FID']]["verlaufnamen"] = $verlaufliste [$line ["L_Id"]] ["verlaufnamen"];
 	  }		
 
@@ -144,7 +153,6 @@ catch (HttpException $ex)
 }
 
 
-
 ksort($passlist);
 
 $anz = 1;
@@ -177,15 +185,30 @@ foreach($passlist as $timedpass)
 		$departureitem["stationname"] = $ort_nr["ORT_NAME"];
 		$departureitem["lidname"] = $singlepass["linie"]["LIDNAME"];
 		$departureitem["li_nr"] = $singlepass["linie"]["LI_NR"];
+		$departureitem["frt_fid"] = $singlepass["abfahrt"]["FRT_FID"];
 		$departureitem["str_li_var"] = $singlepass["linie"]["STR_LI_VAR"];
 		$departureitem["last_station"] = $ortliste[$singlepass["verlauf"][count($singlepass["verlauf"])]]["ORT_NAME"];
-		$departureitem["arrival"] = getFormatTime($stop);
-		$departureitem["departure"] = getFormatTime($start);
+		if($singlepass["verlauf"][1] != $ort_nr["O_Id"])
+		  {
+		    $departureitem["arrival"] = getFormatTime($stop);
+		  }
+		else
+		  {
+		    $departureitem["arrival"] = null;
+		  }
+		if($singlepass["verlauf"][count($singlepass["verlauf"])] != $ort_nr["O_Id"])
+		  {
+		    $departureitem["departure"] = getFormatTime($start);
+		  }
+		else
+		  {
+		    $departureitem["departure"] = null;
+		  }
 		$departureitem["verlauf"] = $singlepass['verlaufnamen'];
 
 		if(isset($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]))
 		  {
-		    $departureitem["delay"] = floor($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]["delay_sec"] / 60);
+		    $departureitem["delay"] = $realtimearray[$singlepass["abfahrt"]["FRT_FID"]]["delay_sec"];
 		  }
 		else
 		  {
@@ -197,17 +220,33 @@ foreach($passlist as $timedpass)
 	      {
 		if($realstart >= $acttime || $realstop >= $acttime)
 		  {
-
 		    $departureitem["stationname"] = $ort_nr["ORT_NAME"];
 		    $departureitem["lidname"] = $singlepass["linie"]["LIDNAME"];
+		    $departureitem["li_nr"] = $singlepass["linie"]["LI_NR"];
+		    $departureitem["frt_fid"] = $singlepass["abfahrt"]["FRT_FID"];
+		    $departureitem["str_li_var"] = $singlepass["linie"]["STR_LI_VAR"];
 		    $departureitem["last_station"] = $ortliste[$singlepass["verlauf"][count($singlepass["verlauf"])]]["ORT_NAME"];
-		    $departureitem["arrival"] = getFormatTime($stop);
-		    $departureitem["departure"] = getFormatTime($start);
+		    if($singlepass["verlauf"][1] != $ort_nr["O_Id"])
+		      {
+			$departureitem["arrival"] = getFormatTime($stop);
+		      }
+		    else
+		      {
+			$departureitem["arrival"] = null;
+		      }
+		    if($singlepass["verlauf"][count($singlepass["verlauf"])] != $ort_nr["O_Id"])
+		      {
+			$departureitem["departure"] = getFormatTime($start);
+		      }
+		    else
+		      {
+			$departureitem["departure"] = null;
+		      }
 		    $departureitem["verlauf"] = $singlepass['verlaufnamen'];
 		    
 		    if(isset($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]))
 		      {
-			$departureitem["delay"] = floor($realtimearray[$singlepass["abfahrt"]["FRT_FID"]]["delay_sec"] / 60);
+			$departureitem["delay"] = $realtimearray[$singlepass["abfahrt"]["FRT_FID"]]["delay_sec"];
 		      }
 		    else
 		      {
@@ -273,16 +312,6 @@ elseif(isset($_REQUEST['type']) && $_REQUEST['type'] == "jsonp")
       {
 	header("Content-type: text/javascript; charset=utf-8");	
 	echo $_REQUEST['JSONP']."(".json_encode($jsonarray).")";
-      }
-    else if(isset($_REQUEST['callback']))
-      {
-	header("Content-type: text/javascript; charset=utf-8");	
-	echo $_REQUEST['callback']."(".json_encode($jsonarray).")";
-      }
-    else if(isset($_REQUEST['CALLBACK']))
-      {
-	header("Content-type: text/javascript; charset=utf-8");
-        echo $_REQUEST['CALLBACK']."(".json_encode($jsonarray).")";
       }
     else
       {
