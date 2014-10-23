@@ -176,6 +176,8 @@ foreach($passlist as $timedpass)
 	      {
 		$departureitem["stationname"] = $ort_nr["ORT_NAME"];
 		$departureitem["lidname"] = $singlepass["linie"]["LIDNAME"];
+		$departureitem["li_nr"] = $singlepass["linie"]["LI_NR"];
+		$departureitem["str_li_var"] = $singlepass["linie"]["STR_LI_VAR"];
 		$departureitem["last_station"] = $ortliste[$singlepass["verlauf"][count($singlepass["verlauf"])]]["ORT_NAME"];
 		$departureitem["arrival"] = getFormatTime($stop);
 		$departureitem["departure"] = getFormatTime($start);
@@ -271,6 +273,16 @@ elseif(isset($_REQUEST['type']) && $_REQUEST['type'] == "jsonp")
       {
 	header("Content-type: text/javascript; charset=utf-8");	
 	echo $_REQUEST['JSONP']."(".json_encode($jsonarray).")";
+      }
+    else if(isset($_REQUEST['callback']))
+      {
+	header("Content-type: text/javascript; charset=utf-8");	
+	echo $_REQUEST['callback']."(".json_encode($jsonarray).")";
+      }
+    else if(isset($_REQUEST['CALLBACK']))
+      {
+	header("Content-type: text/javascript; charset=utf-8");
+        echo $_REQUEST['CALLBACK']."(".json_encode($jsonarray).")";
       }
     else
       {
