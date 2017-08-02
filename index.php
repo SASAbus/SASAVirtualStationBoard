@@ -298,6 +298,7 @@ foreach($passlist as $timedpass)
 //ob_clean();
 if(isset($_REQUEST['type']) && $_REQUEST['type'] == "json")
   {
+    header("Access-Control-Allow-Origin: *");
     header("Content-type: application/json; charset=utf-8");
     echo json_encode($jsonarray);
   }
